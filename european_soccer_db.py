@@ -8,6 +8,6 @@ import sqlite3
 
 conn = sqlite3.connect('data/database.sqlite')
 c = conn.cursor()
-for row in c.execute('SELECT * FROM Player'):
+for row in c.execute(''):
     print row
 
