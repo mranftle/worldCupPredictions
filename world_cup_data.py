@@ -20,16 +20,59 @@ def make_data_frame(games):
 
     # add game data to dataframe
     for game in games:
-        print games_df[game[0]][game[1]]
         if len(games_df[game[0]][game[1]]) == 0 and len(games_df[game[1]][game[0]]) == 0:
-            games_df[game[0]][game[1]] = list(game[2])
-            games_df[game[1]][game[0]] = list(game[2])
+            if len(game[2]) == 0:
+                game[2] = '0-0'
+                games_df[game[0]][game[1]] = [(game[2],game[3])]
+            elif int(game[2][0]) > int(game[2][2]):
+                games_df[game[0]][game[1]] = [(game[2], game[3])]
+                games_df[game[1]][game[0]] = [(game[2][2]+'-'+game[2][0], game[3])]
+            else:
+                games_df[game[0]][game[1]] = [(game[2][2]+'-'+game[2][0], game[3])]
         else:
-            games_df[game[0]][game[1]] = games_df[game[0]][game[1]] + list(game[2])
-            games_df[game[1]][game[0]] = games_df[game[1]][game[0]] + list(game[2])
+            if len(game[2]) == 0:
+                game[2] = '0-0'
+                games_df[game[0]][game[1]] = games_df[game[0]][game[1]] + [(game[2],game[3])]
+            elif int(game[2][0]) > int(game[2][2]):
+                games_df[game[0]][game[1]]= games_df[game[0]][game[1]] + [(game[2], game[3])]
+                games_df[game[1]][game[0]] = games_df[game[1]][game[0]] + [(game[2][2] + '-' + game[2][0], game[3])]
 
+            else:
+                games_df[game[0]][game[1]] = games_df[game[1]][game[0]] + [(game[2], game[3])]
+                games_df[game[0]][game[1]] = games_df[game[0]][game[1]] + [(game[2][2] + '-' + game[2][0], game[3])]
     return games_df
 
+def team_history(matchups):
+    team_history = dict()
+    for team in matchups:
+        team_history[team] = {}
+        for opp in matchups[team].iteritems():
+            # print team, opp
+            for match in opp[1]:
+                if int(match[0][0]) > int(match[0][2]):
+                    win = 1
+                    tie = 0
+                    lose = 0
+                elif int(match[0][0]) < int(match[0][2]):
+                    win = 0
+                    tie = 0
+                    lose = 1
+                else:
+                    win = 0
+                    tie = 1
+                    lose = 0
+                if match[1] not in team_history[team]:
+                    team_history[team][match[1]] = {"win": win, "lose": lose, "tie": tie, "goals_scored":int(match[0][0]), "goals_allowed":int(match[0][2]), "win_diff":int(match[0][0])-int(match[0][2])}
+                else:
+                    year_data_temp = team_history[team][match[1]]
+                    team_history[team][match[1]]['win'] = team_history[team][match[1]]['win'] + win
+                    team_history[team][match[1]]['lose'] = team_history[team][match[1]]['lose'] + lose
+                    team_history[team][match[1]]['tie'] = team_history[team][match[1]]['tie'] + tie
+                    team_history[team][match[1]]['goals_scored'] = team_history[team][match[1]]['goals_scored'] + int(match[0][0])
+                    team_history[team][match[1]]['goals_allowed'] = team_history[team][match[1]]['goals_allowed'] + int(match[0][2])
+                    team_history[team][match[1]]['win_diff'] = team_history[team][match[1]]['win_diff'] + int(match[0][0])-int(match[0][2])
+
+    return team_history
 
 for root, dirs, files in os.walk(PAST_CUP_DATA, topdown=False):
     for name in files:
@@ -48,13 +91,19 @@ for root, dirs, files in os.walk(PAST_CUP_DATA, topdown=False):
             #
 
         elif name == 'cup.txt' or name == 'cup_final.txt':
-            year = path.split('/')[3]
+            year = path.split('/')[3][:4]
             with open(path, 'r') as f:
                 for line in f:
 
                     # clean data and get team1, team2 and scores
                     if not line in ['\n', '\r\n']:
                         scores = re.findall(r'[[0-9]-[0-9]', line)
+                        if scores:
+                            scores = scores[0]
+                        #     # rearrage score so winner is always first
+                        #     if int(scores[0]) < int(scores[2]):
+                        #         scores = scores[2] + '-' +scores[0]
+
                         if '@' in line:
                             temp = re.findall(r'([A-Z]\w+)', line.split('@')[0])[1:]
                             if temp[0] == str('Jun'):
@@ -93,16 +142,16 @@ for root, dirs, files in os.walk(PAST_CUP_DATA, topdown=False):
                             else:
                                 team1 = temp[0]
                                 team2 = '-'.join(temp[1:])
+                            games.append([team1, team2, scores, year])
 
-                            games.append([team1, team2, scores])
-
+# print games
 matchups = make_data_frame(games)
+print team_history(matchups)
+# print matchups['Hungary']['Bulgaria']
+# print matchups['Bulgaria']['Hungary']
+# matchups.to_csv('data/test_matchups.csv')
 
-# get statistics
-for team in matchups:
-    for opp in matchups[team].iteritems():
-        print opp
+# statistics to get
 
-
-
-# put game data into dataframe
+# for each team: goals scored, goals allowed, wins, loses, win difference, per year
+# for each year: total num goals, goal differential,
