@@ -49,7 +49,8 @@ def average_player_ratings():
 
     rosters = {k: get_player_rating(k.title(),v) for k,v in rosters.items()}
 
-    plot_with_plotly(rosters)
+    print rosters
+    # plot_with_plotly(rosters)
 
 
         # '''read in yml configs'''
@@ -69,7 +70,7 @@ def average_player_ratings():
     #
     # plot_with_plotly(average_player_ratings)
 
-def plot_with_plotly(roster):
+# def plot_with_plotly(roster):
 
     #     ratings = list(roster[team]['Overall'])
     #     temp_trace = go.Box(
@@ -92,3 +93,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
